@@ -6,10 +6,74 @@ StudyLogV2 tracks university students' study effort. Product and technical speci
 
 ## Current state
 
-- Greenfield: the repo currently contains only `README.md`, `AGENTS.md`, and `docs/`. No source code, manifest, lockfile, or tooling exists yet.
-- Planned stack: TypeScript monorepo with pnpm, React + Vite + Tailwind v4 + React Router 7, Express 5, Postgres + Drizzle, Vitest/RTL/Supertest/Playwright, deployed on Vercel. Do not scaffold features until Fase 0 is executed.
-- Commands in `docs/testing-spec.md` §4 are targets, not executable yet. After Fase 0, replace this section with the real commands and single-test workflow.
+- Fase 0 (foundation) is implemented on `chore/foundation`: pnpm monorepo, tooling, local Postgres, shared contract v0, web/API bases, CI, Playwright and the Vercel decision spike.
+- Stack: TypeScript monorepo with pnpm, React + Vite + Tailwind v4 + React Router 7, Express 5, Postgres + Drizzle, Vitest/RTL/Supertest/Playwright, deployed on Vercel.
+- The next implementation work starts at Fase 1 (`docs/plan.md`). Do not add product features on foundation branches.
 - `docs/` is the source of truth. If a decision changes, update the affected spec and, if the phase scope changes, `docs/plan.md` in the same PR. Branch and review rules live in `docs/gitflow-spec.md`.
+
+## Repository layout
+
+```text
+apps/
+  api/           Express 5 API, Drizzle client, migrations and seed
+  web/           React SPA (Vite, Tailwind v4, React Router 7)
+packages/
+  shared/        Zod schemas, inferred types, error codes and constants (contract v0)
+api/
+  index.ts       Vercel serverless entrypoint (exports the Express app)
+e2e/             Playwright smoke tests
+infra/           Postgres docker-compose and seed notes
+scripts/         Local dev helpers (ensure-db)
+docs/            Product and technical specifications
+```
+
+## Prerequisites
+
+- Node 22 (`nvm use` reads `.nvmrc`). Node 24 also works locally.
+- pnpm `12.16.1` (`corepack enable` picks it up from `packageManager`).
+- Postgres 16 via Docker Compose or Podman. `scripts/ensure-db.mjs` supports both.
+- Copy `.env.example` to `.env` for local overrides. Never commit `.env`.
+
+## Commands
+
+| Command | Purpose |
+|---|---|
+| `pnpm install --frozen-lockfile` | Reproducible install from the lockfile |
+| `pnpm dev` | Ensure DB, then run API (`:3001`) and web (`:5173`) |
+| `pnpm dev:api` / `pnpm dev:web` | Run one side only |
+| `pnpm lint` | ESLint flat config |
+| `pnpm typecheck` | Root config plus every workspace, sequentially |
+| `pnpm test` | Vitest across shared, API and web |
+| `pnpm test:e2e` | Playwright smoke suite (starts `pnpm dev` if needed) |
+| `pnpm build` | Build API with tsup and web with Vite |
+| `pnpm db:up` / `pnpm db:down` | Postgres via Docker Compose |
+| `node scripts/ensure-db.mjs` | Start Postgres with Docker or Podman, or verify the port |
+| `pnpm db:generate` | Generate Drizzle migrations |
+| `pnpm db:migrate` | Apply migrations |
+| `pnpm db:seed` | Run the deterministic seed |
+| `pnpm format` / `pnpm format:check` | Prettier |
+
+Single-test workflow:
+
+```bash
+pnpm --filter @studylog/api test -- src/app.test.ts
+pnpm --filter @studylog/web test -- src/pages/LandingPage.test.tsx
+pnpm --filter @studylog/shared test -- src/schemas.test.ts
+pnpm test:e2e -- e2e/smoke.spec.ts
+```
+
+Local endpoints: web at `http://127.0.0.1:5173`, API at `http://127.0.0.1:3001`, health at `GET /api/health`.
+
+## Quality gate
+
+CI (`.github/workflows/ci.yml`) runs `install → lint → typecheck → test → build`, then a separate E2E job with Postgres, migrations, seed and Playwright. A PR is only ready for human review when the gate is green. The PR checklist is in `.github/pull_request_template.md`.
+
+## Contract
+
+- `packages/shared` is the executable contract: Zod schemas, inferred types, error codes, pagination limits and domain constants.
+- `docs/contract-v0.md` records what is frozen for Fase 0 and how to change it.
+- Contract changes use their own `chore/contract-<slug>` PR to `develop`; consumers rebase afterwards.
+- `apps/web` must not import from `apps/api`; both may import `@studylog/shared`.
 
 ## Git
 

@@ -87,8 +87,8 @@ pnpm install --frozen-lockfile
 pnpm lint
 pnpm typecheck
 pnpm test
-pnpm --filter api test -- src/routes/auth.test.ts
-pnpm --filter web test -- src/features/pomodoro/Timer.test.tsx
+pnpm --filter @studylog/api test -- src/app.test.ts
+pnpm --filter @studylog/web test -- src/pages/LandingPage.test.tsx
 pnpm test:e2e
 pnpm test:e2e -- tests/auth.spec.ts
 pnpm build
