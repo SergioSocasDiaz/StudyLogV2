@@ -61,7 +61,7 @@ Tipos habituales: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `b
    - Pegar/resumir los hallazgos en el PR.
    - Corregir o justificar cada uno.
 6. Para UI, ejecutar `@web-design-guidelines` y el gate de `design-taste-frontend`.
-7. Abrir PR a `develop` con la plantilla.
+7. Abrir PR a `develop` con la plantilla. El agente lo crea automáticamente con `gh pr create --base develop`; no fusiona sin aprobación humana.
 8. CI verde + preview de Vercel funcionando.
 9. Revisión humana y merge.
 

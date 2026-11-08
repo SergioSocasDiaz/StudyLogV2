@@ -15,3 +15,4 @@ StudyLogV2 tracks university students' study effort. Product and technical speci
 
 - Default branch: `main`, tracking `origin/main` at `github.com/SergioSocasDiaz/StudyLogV2`.
 - Gitflow: `feature/*` → `develop` → `main`. No direct commits to `main` or `develop`. Review flow and branch rules are in `docs/gitflow-spec.md`.
+- When a branch is ready, open the PR to `develop` automatically with `gh pr create` (base `develop`). Never merge without human approval.
