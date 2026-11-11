@@ -1,3 +1,17 @@
+/**
+ * Makes sure a local Postgres is reachable before `pnpm dev` starts the API.
+ *
+ * Runs as the `predev` hook and is safe to repeat: if the port already accepts
+ * connections it exits 0 without touching anything. Otherwise it starts the
+ * `db` service from `infra/docker-compose.yml` when Docker is present, or
+ * reuses/creates a `postgres:16-alpine` container with Podman when it is not.
+ * It then polls the port for up to 30 s and fails fast if the database never
+ * answers, so the API is never launched against a missing database.
+ *
+ * With neither engine available it only warns and exits 0, leaving a manually
+ * started Postgres untouched. Values come from `.env` (optional) and fall back
+ * to the same `POSTGRES_*` / `DATABASE_URL` defaults as the compose file.
+ */
 import { spawnSync } from 'node:child_process';
 import net from 'node:net';
 
@@ -8,7 +22,8 @@ try {
 }
 
 const composeFile = 'infra/docker-compose.yml';
-const databaseUrl = process.env.DATABASE_URL ?? 'postgres://studylog:studylog@localhost:5432/studylog';
+const databaseUrl =
+  process.env.DATABASE_URL ?? 'postgres://studylog:studylog@localhost:5432/studylog';
 const containerName = process.env.POSTGRES_CONTAINER ?? 'studylog-db';
 const port = Number(new URL(databaseUrl).port || 5432);
 const user = process.env.POSTGRES_USER ?? 'studylog';
