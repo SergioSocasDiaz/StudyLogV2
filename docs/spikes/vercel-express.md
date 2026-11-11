@@ -76,7 +76,7 @@ Consecuencias:
 
 ## 5. Trabajo pendiente antes de producción
 
-1. ~~Crear el proyecto Vercel~~ hecho: `studylogv2` en el equipo `socas-dev`. **Falta conectar el repositorio** para que cada PR genere preview automático; hoy los deployments se suben por CLI.
+1. ~~Crear el proyecto Vercel~~ hecho: `studylogv2` en el equipo `socas-dev`. Repositorio GitHub conectado el 11 nov 2026 con production branch `main`: los previews por rama/PR y el deploy de producción son automáticos.
 2. Configurar Neon/Supabase con `DATABASE_URL` pooled y `DATABASE_URL_UNPOOLED` directa. **Pendiente**: sin base gestionada, `/api/health` responde `503 database down`.
 3. Desplegar un preview de la Fase 1 y medir cold start, cookies, `argon2`, `requestId` y límites. `requestId` ya verificado; el resto depende de Fase 1.
 4. Ejecutar migraciones en CI/CD con la cadena directa, nunca en cold start.
@@ -84,7 +84,7 @@ Consecuencias:
 
 ## 6. Estado real del despliegue (11 nov 2026)
 
-Proyecto `studylogv2` (`prj_FmxDmLMpnTZl7zAesA26HR2XPgon`, equipo `socas-dev`), vinculado en `.vercel/` (ignorado por git). Los deployments no vienen de GitHub: se subieron con la CLI.
+Proyecto `studylogv2` (`prj_FmxDmLMpnTZl7zAesA26HR2XPgon`, equipo `socas-dev`), vinculado en `.vercel/` (ignorado por git). El **11 nov 2026** se conectó el repositorio `SergioSocasDiaz/StudyLogV2` con production branch `main`: desde entonces cada push a una rama o PR genera un deployment Preview y cada push a `main` genera Producción, sin usar la CLI. Los deployments de la tabla siguiente se subieron por CLI antes de esa conexión.
 
 ### Deployments encontrados
 

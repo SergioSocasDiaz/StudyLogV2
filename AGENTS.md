@@ -7,7 +7,7 @@ StudyLogV2 tracks university students' study effort. Product and technical speci
 ## Current state
 
 - Fase 0 (foundation) is implemented on `chore/foundation`: pnpm monorepo, tooling, local Postgres, shared contract v0, web/API bases, CI, Playwright and the Vercel decision spike.
-- Vercel: project `studylogv2` (`socas-dev`) serves the static SPA and the Express function under `/api`. `JWT_ACCESS_SECRET` is configured for Preview and Production; there is no managed Postgres yet, so `/api/health` answers `503 database down` while `/api/health/live` is `200`. Deployments are uploaded with the CLI (no GitHub integration, so PRs do not create previews yet). Details in `docs/spikes/vercel-express.md` §6.
+- Vercel: project `studylogv2` (`socas-dev`) serves the static SPA and the Express function under `/api`. The GitHub repository is connected (production branch `main`), so pushes deploy automatically: PRs and non-`main` branches get a Preview, `main` gets Production — no CLI step needed. `JWT_ACCESS_SECRET` is configured for Preview and Production; there is no managed Postgres yet, so `/api/health` answers `503 database down` while `/api/health/live` is `200`. Details in `docs/spikes/vercel-express.md` §6.
 - Stack: TypeScript monorepo with pnpm, React + Vite + Tailwind v4 + React Router 7, Express 5, Postgres + Drizzle, Vitest/RTL/Supertest/Playwright, deployed on Vercel.
 - The next implementation work starts at Fase 1 (`docs/plan.md`). Do not add product features on foundation branches.
 - `docs/` is the source of truth. If a decision changes, update the affected spec and, if the phase scope changes, `docs/plan.md` in the same PR. Branch and review rules live in `docs/gitflow-spec.md`.
@@ -52,7 +52,7 @@ docs/            Product and technical specifications
 | `pnpm db:generate` | Generate Drizzle migrations |
 | `pnpm db:migrate` | Apply migrations |
 | `pnpm db:seed` | Run the deterministic seed |
-| `pnpm build && vercel build && vercel deploy --prebuilt` | Build and upload a Vercel preview from the linked project (CLI) |
+| `pnpm build && vercel build && vercel deploy --prebuilt` | Manual Vercel deploy (optional; Git integration deploys on push) |
 | `pnpm format` / `pnpm format:check` | Prettier |
 
 Single-test workflow:

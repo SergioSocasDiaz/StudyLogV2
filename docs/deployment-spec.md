@@ -116,7 +116,7 @@ Despliegue:
 
 ## 7. Preview y entornos
 
-- Cada PR tiene preview de Vercel. Hoy el proyecto está vinculado pero sin integración con GitHub: los deployments se suben por CLI (`vercel build && vercel deploy --prebuilt`). Conectar el repositorio es trabajo pendiente.
+- Cada PR tiene preview de Vercel. El repositorio está conectado (production branch `main`): cada push a una rama o PR genera un Preview automático y cada push a `main` genera Producción. La CLI queda solo para despliegues manuales de emergencia.
 - Base de datos de preview:
   - Branch de Neon, o
   - Esquema/base dedicada.
