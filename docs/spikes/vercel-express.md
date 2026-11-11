@@ -1,6 +1,6 @@
 # Spike — Express como función serverless en Vercel
 
-> Fase 0 · Timebox: 1–2 días · Estado: **decisión registrada, validación de despliegue pendiente de credenciales**.
+> Fase 0 · Timebox: 1–2 días · Estado: **decisión registrada y despliegue validado sin base de datos gestionada** (ver §6).
 
 ## 1. Pregunta e hipótesis
 
@@ -76,13 +76,55 @@ Consecuencias:
 
 ## 5. Trabajo pendiente antes de producción
 
-1. Crear el proyecto Vercel y conectar el repositorio.
-2. Configurar Neon/Supabase con `DATABASE_URL` pooled y `DATABASE_URL_UNPOOLED` directa.
-3. Desplegar un preview de la Fase 1 y medir cold start, cookies, `argon2`, `requestId` y límites.
+1. ~~Crear el proyecto Vercel~~ hecho: `studylogv2` en el equipo `socas-dev`. **Falta conectar el repositorio** para que cada PR genere preview automático; hoy los deployments se suben por CLI.
+2. Configurar Neon/Supabase con `DATABASE_URL` pooled y `DATABASE_URL_UNPOOLED` directa. **Pendiente**: sin base gestionada, `/api/health` responde `503 database down`.
+3. Desplegar un preview de la Fase 1 y medir cold start, cookies, `argon2`, `requestId` y límites. `requestId` ya verificado; el resto depende de Fase 1.
 4. Ejecutar migraciones en CI/CD con la cadena directa, nunca en cold start.
 5. Registrar los resultados en este documento y, si procede, ejecutar la reversión a dos proyectos.
 
-## 6. Enlaces
+## 6. Estado real del despliegue (11 nov 2026)
+
+Proyecto `studylogv2` (`prj_FmxDmLMpnTZl7zAesA26HR2XPgon`, equipo `socas-dev`), vinculado en `.vercel/` (ignorado por git). Los deployments no vienen de GitHub: se subieron con la CLI.
+
+### Deployments encontrados
+
+| Fecha | Entorno | Resultado |
+|---|---|---|
+| 8 nov 16:32 | Production (`studylogv2.vercel.app`) | Web estática OK; función `api/index` con `FUNCTION_INVOCATION_FAILED` |
+| 8 nov 22:09 | Preview (×2) | Idem |
+
+Causa del fallo en esos tres: el build desplegado era anterior al código actual (`buildCommand` sin `@studylog/shared`) y el entrypoint compilado importaba `../apps/api/src/app` sin resolución:
+
+```text
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/var/task/apps/api/src/app'
+imported from /var/task/api/index.js
+```
+
+Además el proyecto no tenía **ninguna** variable de entorno (`vercel env ls` vacío).
+
+### Corrección aplicada
+
+- Se añadió `JWT_ACCESS_SECRET` (secreto distinto) en los entornos **Preview** y **Production**. Sin él, `apps/api/src/config/env.ts` aborta el arranque de la función porque `NODE_ENV=production`: `Error: JWT_ACCESS_SECRET must be configured in production`.
+- Se reconstruyó con `pnpm build` + `vercel build` y se desplegó un preview con `vercel deploy --prebuilt`.
+- Verificado el preview, se promovió a producción con `vercel promote`, que sustituyó el deployment roto del 8 nov. El alias `studylogv2.vercel.app` sirve ahora la versión corregida. Para volver atrás: `vercel rollback` o promover el deployment anterior.
+
+### Verificado en preview y producción
+
+| Comprobación | Resultado |
+|---|---|
+| `GET /api/health/live` | `200 {"status":"ok","uptimeSeconds":…}` |
+| `GET /api/health` | `503 {"status":"error","database":"down"}` (sin DB gestionada, comportamiento esperado) |
+| `GET /api/nope` | `404 {"error":{"code":"NOT_FOUND",…}}` |
+| `x-request-id` | Presente en la respuesta |
+| `GET /` | Landing estática servida correctamente |
+
+Notas:
+
+- Las URLs están protegidas por **Deployment Protection** (Vercel Authentication): sin sesión redirigen al login. Para probar por CLI: `vercel curl <ruta> --deployment <url>`.
+- Runtime en la nube: `nodejs26.x` (ajuste del proyecto). En local `.nvmrc` fija 22 y `vercel build` emite `nodejs24.x`; no afectó a la ejecución.
+- `api/index.ts` importa `../apps/api/src/app.js` y `@vercel/node` compila todo el árbol de `apps/api` dentro de la función: funciona, pero cualquier refactor debe volver a comprobar el preview.
+
+## 7. Enlaces
 
 - `vercel.json`
 - `api/index.ts`
