@@ -1,0 +1,43 @@
+{
+  "name": "studylogv2",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.16.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "predev": "node scripts/ensure-db.mjs && pnpm --filter @studylog/shared build",
+    "dev": "concurrently -n api,web -c blue,green \"pnpm --filter @studylog/api dev\" \"pnpm --filter @studylog/web dev\"",
+    "dev:web": "pnpm --filter @studylog/web dev",
+    "dev:api": "pnpm --filter @studylog/api dev",
+    "build": "pnpm --filter @studylog/shared build && pnpm --filter @studylog/api build && pnpm --filter @studylog/web build",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit && pnpm -r --workspace-concurrency=1 --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "test:watch": "pnpm -r --parallel --if-present test:watch",
+    "test:e2e": "playwright test",
+    "db:up": "docker compose -f infra/docker-compose.yml up -d db",
+    "db:down": "docker compose -f infra/docker-compose.yml down",
+    "db:generate": "pnpm --filter @studylog/api db:generate",
+    "db:migrate": "pnpm --filter @studylog/api db:migrate",
+    "db:seed": "pnpm --filter @studylog/api db:seed",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.0",
+    "@types/node": "^24.0.0",
+    "concurrently": "^10.0.7",
+    "eslint": "^10.14.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "eslint-plugin-simple-import-sort": "^14.0.0",
+    "globals": "^17.14.0",
+    "prettier": "^3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.72.1"
+  }
+}

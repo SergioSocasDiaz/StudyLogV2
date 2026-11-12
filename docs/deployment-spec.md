@@ -79,6 +79,8 @@ Reglas:
 - `.env*` reales están en `.gitignore`.
 - Secretos solo en Vercel/GitHub Secrets.
 - Separar entornos Development, Preview y Production.
+- `JWT_ACCESS_SECRET` es **obligatorio** en Preview y Production: con `NODE_ENV=production` la API no arranca si falta o si conserva el valor `dev-only…`. Cargarlo antes del primer deploy.
+- Sin `DATABASE_URL` gestionada la API arranca igual: `/api/health/live` responde `200` y `/api/health` responde `503 { "database": "down" }`.
 
 ## 5. Migraciones
 
@@ -114,7 +116,7 @@ Despliegue:
 
 ## 7. Preview y entornos
 
-- Cada PR tiene preview de Vercel.
+- Cada PR tiene preview de Vercel. El repositorio está conectado (production branch `main`): cada push a una rama o PR genera un Preview automático y cada push a `main` genera Producción. La CLI queda solo para despliegues manuales de emergencia.
 - Base de datos de preview:
   - Branch de Neon, o
   - Esquema/base dedicada.
