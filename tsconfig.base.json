@@ -16,10 +16,9 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "sourceMap": true,
-    "baseUrl": ".",
     "paths": {
-      "@studylog/shared": ["packages/shared/src/index.ts"],
-      "@studylog/shared/*": ["packages/shared/src/*"]
+      "@studylog/shared": ["./packages/shared/src/index.ts"],
+      "@studylog/shared/*": ["./packages/shared/src/*"]
     }
   }
 }
