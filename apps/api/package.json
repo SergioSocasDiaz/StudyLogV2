@@ -1,0 +1,38 @@
+{
+  "name": "@studylog/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --conditions=development src/index.ts",
+    "build": "tsup",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx --conditions=development src/db/seed.ts"
+  },
+  "dependencies": {
+    "@studylog/shared": "workspace:*",
+    "dotenv": "^18.0.9",
+    "drizzle-orm": "^0.45.4",
+    "express": "^5.3.0",
+    "pg": "^8.23.1",
+    "pino": "^10.4.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.23.1",
+    "@types/supertest": "^7.2.1",
+    "drizzle-kit": "^0.31.11",
+    "supertest": "^7.3.2",
+    "tsup": "^9.0.0",
+    "tsx": "^4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

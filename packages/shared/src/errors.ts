@@ -1,0 +1,25 @@
+export const ERROR_CODES = [
+  'BAD_REQUEST',
+  'UNAUTHORIZED',
+  'FORBIDDEN',
+  'NOT_FOUND',
+  'CONFLICT',
+  'VALIDATION_ERROR',
+  'IDEMPOTENCY_KEY_REUSED',
+  'RATE_LIMITED',
+  'INTERNAL_ERROR',
+] as const;
+
+export type ErrorCode = (typeof ERROR_CODES)[number];
+
+export const ERROR_STATUS: Record<ErrorCode, number> = {
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  VALIDATION_ERROR: 422,
+  IDEMPOTENCY_KEY_REUSED: 422,
+  RATE_LIMITED: 429,
+  INTERNAL_ERROR: 500,
+};
