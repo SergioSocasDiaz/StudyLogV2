@@ -144,6 +144,8 @@ Si el store falla (Redis caído), el sistema **deja pasar** la petición y lo re
 
 Migración: `apps/api/drizzle/0000_auth_users.sql`. Se aplica con `pnpm db:migrate`; **nunca** al arrancar la función serverless.
 
+Una migración es un archivo SQL secuencial y versionado que registra cada cambio estructural en la base de datos (como crear tablas o añadir columnas) para poder replicarlo de forma ordenada y segura en cualquier entorno (local, pruebas o producción) sin perder datos. Funcionan como el historial de commits de Git, pero aplicado al esquema de tu base de datos.
+
 ### 4.1 `users`
 
 | Columna                     | Tipo          | Notas                                         |
