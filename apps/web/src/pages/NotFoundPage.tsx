@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom';
 
+import { useDocumentTitle } from '../lib/use-document-title';
+
 export function NotFoundPage() {
+  useDocumentTitle('StudyLog — Página no encontrada');
+
   return (
     <section className="mx-auto w-full max-w-6xl px-6 py-24">
       <p className="text-sm font-medium uppercase tracking-[0.18em] text-accent">404</p>
