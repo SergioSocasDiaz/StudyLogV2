@@ -7,9 +7,12 @@ StudyLogV2 tracks university students' study effort. Product and technical speci
 ## Current state
 
 - Fase 0 (foundation) is implemented on `chore/foundation`: pnpm monorepo, tooling, local Postgres, shared contract v0, web/API bases, CI, Playwright and the Vercel decision spike.
+- Fase 1.1 (auth-api) is merged into `develop` (PR #3): argon2id hashing, rotating refresh tokens with 10s reuse grace period, cookies httpOnly + SameSite=Lax.
+- Fase 1.2 (contract-validation-details) is merged into `develop` (PR #4): `validationErrorDetailsSchema` typing the 422 `details` payload.
+- Fase 1.2 (auth-ui) is implemented on `feature/auth-ui`: access tokens strictly in-memory, single-flight refresh interceptor, session bootstrap, accessible `/login` and `/register` with React Hook Form + Zod, authenticated `/app` shell.
 - Vercel: project `studylogv2` (`socas-dev`) serves the static SPA and the Express function under `/api`. The GitHub repository is connected (production branch `main`), so pushes deploy automatically: PRs and non-`main` branches get a Preview, `main` gets Production — no CLI step needed. `JWT_ACCESS_SECRET` is configured for Preview and Production; there is no managed Postgres yet, so `/api/health` answers `503 database down` while `/api/health/live` is `200`. Details in `docs/spikes/vercel-express.md` §6.
 - Stack: TypeScript monorepo with pnpm, React + Vite + Tailwind v4 + React Router 7, Express 5, Postgres + Drizzle, Vitest/RTL/Supertest/Playwright, deployed on Vercel.
-- The next implementation work starts at Fase 1 (`docs/plan.md`). Do not add product features on foundation branches.
+- The next implementation work starts at Fase 1.3 (`feature/subjects-api`). Do not add product features on foundation branches.
 - `docs/` is the source of truth. If a decision changes, update the affected spec and, if the phase scope changes, `docs/plan.md` in the same PR. Branch and review rules live in `docs/gitflow-spec.md`.
 
 ## Repository layout
