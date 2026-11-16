@@ -118,3 +118,10 @@ Los cambios de esta sección son **compatibles**: añaden piezas sin modificar n
 - `schemas/auth.ts`: `authResponseSchema` (`{ user, accessToken }`) y `refreshResponseSchema` (`{ accessToken }`).
 - Constantes: `API_PREFIX`, `REFRESH_COOKIE_NAME`, `REFRESH_COOKIE_PATH`, `AUTH_RATE_LIMIT`, `REFRESH_REUSE_GRACE_SECONDS`, `ACCESS_TOKEN_TYPE`.
 - El refresh token no forma parte del contrato HTTP: viaja solo en la cookie `httpOnly`.
+
+### Fase 1.2 — Detalles de validación (2026-11-16)
+
+- `schemas/api-error.ts`: `validationErrorDetailsSchema` describe el `details` de un `422 VALIDATION_ERROR`, que es el resultado de `ZodError.flatten()`: `{ formErrors: string[], fieldErrors: Record<string, string[]> }`.
+- `fieldErrors` solo incluye los campos que fallaron; un payload parcialmente válido no trae las claves correctas. Un campo puede acumular varios mensajes.
+- `parseValidationErrorDetails(details)` valida el campo `unknown` que llega del transporte. Devuelve `null` cuando el `details` pertenece a otro error (por ejemplo, `429` con `{ retryAfterSeconds }`), para que el cliente pueda caer a un mensaje de formulario.
+- No cambia el envelope `ApiError` ni ningún esquema congelado: solo tipa un campo que hasta ahora era `unknown`.
