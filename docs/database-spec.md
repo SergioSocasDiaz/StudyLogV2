@@ -21,7 +21,7 @@ erDiagram
 
     users {
         uuid id PK
-        citext email UK
+        text email UK
         text password_hash
         text display_name
         text timezone
@@ -96,7 +96,7 @@ erDiagram
 | Columna | Tipo | Restricciones |
 |---|---|---|
 | `id` | `uuid` | PK, `gen_random_uuid()` |
-| `email` | `citext` | UNIQUE, NOT NULL |
+| `email` | `text` | UNIQUE por `lower(email)`, NOT NULL, CHECK en minúsculas |
 | `password_hash` | `text` | NOT NULL |
 | `display_name` | `text` | NOT NULL |
 | `timezone` | `text` | NOT NULL, default `UTC` |
@@ -105,8 +105,8 @@ erDiagram
 
 Notas:
 
-- `citext` requiere la extensión `citext`.
-- El email se normaliza a minúsculas; `citext` evita duplicados por mayúsculas.
+- El modelo de referencia usaba `citext`, pero esa extensión requiere `postgresql-contrib` y no está disponible en todas las instalaciones (falta en un Postgres local estándar). La alternativa implementada es `text` normalizado en minúsculas + índice único sobre `lower(email)` + `CHECK (email = lower(email))`: misma unicidad insensible a mayúsculas sin depender de extensiones.
+- El email se normaliza a minúsculas en el contrato Zod; el CHECK impide que una escritura directa en SQL rompa la invariante.
 - No se expone `password_hash` en ninguna respuesta.
 
 ### 3.2 `refresh_tokens`
@@ -118,6 +118,9 @@ Notas:
 | `token_hash` | `text` | NOT NULL, UNIQUE |
 | `expires_at` | `timestamptz` | NOT NULL |
 | `revoked_at` | `timestamptz` | NULL |
+| `revoked_reason` | `text` | NULL: `rotated` \| `logout` \| `reuse` |
+| `family_id` | `uuid` | NOT NULL; agrupa los tokens de un mismo login |
+| `replaced_by_id` | `uuid` | NULL, FK a `refresh_tokens.id`; cadena de rotación |
 | `created_at` | `timestamptz` | NOT NULL, default `now()` |
 | `user_agent` | `text` | NULL |
 
@@ -125,7 +128,8 @@ Notas:
 
 - Solo se guarda el hash del refresh token, nunca el token en claro.
 - Rotación: al usar un refresh token, se revoca y se emite uno nuevo.
-- Reutilización de un token revocado: revocar toda la familia de tokens del usuario.
+- Reutilización de un token revocado fuera de la ventana de gracia (10 s): revocar toda la familia del login. Dentro de la ventana se emite un token hermano para tolerar dos pestañas concurrentes.
+- `revoked_reason` distingue una rotación normal de un cierre de sesión o de una detección de reutilización.
 
 ### 3.3 `subjects`
 

@@ -37,7 +37,8 @@ Códigos previstos:
 |---|---|---|
 | 400 | `BAD_REQUEST` | Petición mal formada |
 | 401 | `UNAUTHORIZED` | Token ausente, inválido o expirado |
-| 403 | `FORBIDDEN` | Autenticado sin permiso |
+| 401 | `INVALID_CREDENTIALS` | Email o contraseña incorrectos en login |
+| 403 | `FORBIDDEN` | Autenticado sin permiso, u origen no permitido |
 | 404 | `NOT_FOUND` | Recurso inexistente o no visible |
 | 409 | `CONFLICT` | Solapamiento, duplicado o estado incompatible |
 | 422 | `VALIDATION_ERROR` | Datos semánticamente inválidos |
@@ -78,10 +79,10 @@ El cliente mantiene `accessToken` en memoria; el refresh token viaja en cookie `
 
 Reglas:
 
-- Email único y normalizado.
-- Contraseña con longitud mínima y sin devolverla nunca.
-- Mensaje genérico si el email ya existe, para no facilitar enumeración.
-- Rate limiting agresivo.
+- Email único y normalizado (minúsculas). Un email duplicado responde `409 CONFLICT` con un mensaje genérico que no confirma si la cuenta existe.
+- Contraseña con longitud mínima (12 caracteres) y sin devolverla nunca.
+- Rate limiting agresivo por IP y por email.
+- La cookie de refresh se emite ya en el registro: `HttpOnly`, `SameSite=Lax`, `Secure` en producción y `Path=/api/v1/auth`.
 
 ### 2.2 `POST /auth/login`
 
@@ -116,17 +117,17 @@ Reglas:
 
 ### 2.3 `POST /auth/refresh`
 
-- Lee el refresh token de la cookie.
-- Rota el token: revoca el actual y emite uno nuevo.
-- Si detecta reutilización de un token revocado, revoca la familia completa.
+- Lee el refresh token de la cookie con `Path=/api/v1/auth`.
+- Rota el token: revoca el actual y emite uno nuevo de la misma familia.
+- **Ventana de gracia (10 s)**: si llega un token recién rotado dentro de la ventana, se interpreta como dos pestañas refrescando a la vez y se emite un token hermano de la misma familia. Fuera de la ventana, la reutilización revoca la familia completa.
 - Response `200` con nuevo `accessToken` y cookie actualizada.
-- Response `401` si no hay sesión válida.
+- Response `401` si no hay sesión válida; la cookie se limpia en la misma respuesta.
 
 ### 2.4 `POST /auth/logout`
 
-- Revoca el refresh token actual.
+- Revoca el refresh token actual (si existe) sin tocar las demás familias del usuario.
 - Limpia la cookie.
-- Response `204`.
+- Response `204`, también cuando no hay cookie (idempotente).
 
 ### 2.5 `GET /auth/me`
 
@@ -448,4 +449,5 @@ Todas las listas potencialmente largas usan:
 - Login, registro y refresh: límites estrictos por IP y por email.
 - Endpoints de escritura: límite razonable por usuario.
 - Respuesta `429` con `Retry-After`.
-- Implementación con Upstash Redis o equivalente; no usar memoria local en Vercel.
+- Implementación detrás de una interfaz `RateLimitStore`: memoria para desarrollo, CI y tests; Upstash Redis en cuanto `UPSTASH_REDIS_REST_URL` esté configurado. El límite en memoria es por instancia y no debe considerarse una defensa real en serverless.
+- Las claves de email se guardan como hash SHA-256, para que el almacén no sea una lista de emails.

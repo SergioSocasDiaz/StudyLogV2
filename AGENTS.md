@@ -37,23 +37,23 @@ docs/            Product and technical specifications
 
 ## Commands
 
-| Command | Purpose |
-|---|---|
-| `pnpm install --frozen-lockfile` | Reproducible install from the lockfile |
-| `pnpm dev` | Ensure DB, then run API (`:3001`) and web (`:5173`) |
-| `pnpm dev:api` / `pnpm dev:web` | Run one side only |
-| `pnpm lint` | ESLint flat config |
-| `pnpm typecheck` | Root config plus every workspace, sequentially |
-| `pnpm test` | Vitest across shared, API and web |
-| `pnpm test:e2e` | Playwright smoke suite (starts `pnpm dev` if needed) |
-| `pnpm build` | Build API with tsup and web with Vite |
-| `pnpm db:up` / `pnpm db:down` | Postgres via Docker Compose |
-| `node scripts/ensure-db.mjs` | Start Postgres with Docker or Podman, or verify the port |
-| `pnpm db:generate` | Generate Drizzle migrations |
-| `pnpm db:migrate` | Apply migrations |
-| `pnpm db:seed` | Run the deterministic seed |
-| `pnpm build && vercel build && vercel deploy --prebuilt` | Manual Vercel deploy (optional; Git integration deploys on push) |
-| `pnpm format` / `pnpm format:check` | Prettier |
+| Command                                                  | Purpose                                                                             |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `pnpm install --frozen-lockfile`                         | Reproducible install from the lockfile                                              |
+| `pnpm dev`                                               | Ensure DB, then run API (`:3001`) and web (`:5173`)                                 |
+| `pnpm dev:api` / `pnpm dev:web`                          | Run one side only                                                                   |
+| `pnpm lint`                                              | ESLint flat config                                                                  |
+| `pnpm typecheck`                                         | Root config plus every workspace, sequentially                                      |
+| `pnpm test`                                              | Vitest across shared, API and web (the API integration tests need Postgres running) |
+| `pnpm test:e2e`                                          | Playwright smoke suite (starts `pnpm dev` if needed)                                |
+| `pnpm build`                                             | Build API with tsup and web with Vite                                               |
+| `pnpm db:up` / `pnpm db:down`                            | Postgres via Docker Compose                                                         |
+| `node scripts/ensure-db.mjs`                             | Start Postgres with Docker or Podman, or verify the port                            |
+| `pnpm db:generate`                                       | Generate Drizzle migrations                                                         |
+| `pnpm db:migrate`                                        | Apply migrations                                                                    |
+| `pnpm db:seed`                                           | Run the deterministic seed                                                          |
+| `pnpm build && vercel build && vercel deploy --prebuilt` | Manual Vercel deploy (optional; Git integration deploys on push)                    |
+| `pnpm format` / `pnpm format:check`                      | Prettier                                                                            |
 
 Single-test workflow:
 

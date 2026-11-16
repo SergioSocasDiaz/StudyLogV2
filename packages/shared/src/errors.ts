@@ -1,6 +1,7 @@
 export const ERROR_CODES = [
   'BAD_REQUEST',
   'UNAUTHORIZED',
+  'INVALID_CREDENTIALS',
   'FORBIDDEN',
   'NOT_FOUND',
   'CONFLICT',
@@ -15,6 +16,7 @@ export type ErrorCode = (typeof ERROR_CODES)[number];
 export const ERROR_STATUS: Record<ErrorCode, number> = {
   BAD_REQUEST: 400,
   UNAUTHORIZED: 401,
+  INVALID_CREDENTIALS: 401,
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,
