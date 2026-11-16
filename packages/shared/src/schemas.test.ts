@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  authResponseSchema,
+  ERROR_STATUS,
   paginationQuerySchema,
+  REFRESH_COOKIE_PATH,
+  refreshResponseSchema,
   studySessionInputSchema,
   subjectInputSchema,
   timezoneSchema,
@@ -41,5 +45,30 @@ describe('shared schemas', () => {
   it('validates IANA timezones', () => {
     expect(timezoneSchema.parse('Europe/Madrid')).toBe('Europe/Madrid');
     expect(() => timezoneSchema.parse('Mars/Olympus')).toThrow();
+  });
+
+  it('validates the auth response envelope', () => {
+    const parsed = authResponseSchema.parse({
+      user: {
+        id: '0f8fad5b-d9cb-469f-a165-70867728950e',
+        email: 'ana@example.com',
+        displayName: 'Ana',
+        timezone: 'Europe/Madrid',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      },
+      accessToken: 'jwt',
+    });
+
+    expect(parsed.user.email).toBe('ana@example.com');
+    expect(() => authResponseSchema.parse({ user: {}, accessToken: 'jwt' })).toThrow();
+    expect(refreshResponseSchema.parse({ accessToken: 'jwt' })).toEqual({ accessToken: 'jwt' });
+  });
+
+  it('keeps the refresh cookie scoped to the auth routes', () => {
+    expect(REFRESH_COOKIE_PATH).toBe('/api/v1/auth');
+  });
+
+  it('maps every error code to an HTTP status', () => {
+    expect(ERROR_STATUS.INVALID_CREDENTIALS).toBe(401);
   });
 });
