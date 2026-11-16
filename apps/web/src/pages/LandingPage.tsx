@@ -1,3 +1,7 @@
+import { Link } from 'react-router-dom';
+
+import { useDocumentTitle } from '../lib/use-document-title';
+
 const pillars = [
   {
     title: 'Registra sin fricción',
@@ -14,6 +18,8 @@ const pillars = [
 ];
 
 export function LandingPage() {
+  useDocumentTitle('StudyLog — Sabes cuánto estudias');
+
   return (
     <section className="mx-auto w-full max-w-6xl px-6 pb-16 pt-10 sm:pt-16">
       <div className="max-w-3xl">
@@ -36,9 +42,12 @@ export function LandingPage() {
           >
             Cómo funciona
           </a>
-          <span className="rounded-md border border-border px-5 py-3 text-sm font-semibold text-ink-muted">
-            Registro disponible en la Fase 1
-          </span>
+          <Link
+            className="rounded-md border border-border px-5 py-3 text-sm font-semibold text-ink transition-colors hover:bg-surface"
+            to="/register"
+          >
+            Crear cuenta
+          </Link>
         </div>
       </div>
 

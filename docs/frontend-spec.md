@@ -17,9 +17,12 @@
 apps/web/
 ├─ src/
 │  ├─ app/
-│  │  ├─ router.tsx
-│  │  ├─ providers.tsx
-│  │  └─ AppShell.tsx
+│  │  ├─ router.tsx              árbol de rutas
+│  │  ├─ providers.tsx           solo QueryClientProvider
+│  │  ├─ AuthSessionProvider.tsx monta AuthProvider bajo demanda
+│  │  ├─ AppShell.tsx            layout público (landing, 404)
+│  │  ├─ AuthLayout.tsx          layout de /login y /register
+│  │  └─ AppLayout.tsx           layout autenticado (/app)
 │  ├─ pages/
 │  │  ├─ LandingPage.tsx
 │  │  ├─ LoginPage.tsx
@@ -30,7 +33,7 @@ apps/web/
 │  │  ├─ LeaderboardPage.tsx
 │  │  └─ SettingsPage.tsx
 │  ├─ features/
-│  │  ├─ auth/
+│  │  ├─ auth/                   api, sesión, guardas, esquemas y errores
 │  │  ├─ subjects/
 │  │  ├─ sessions/
 │  │  ├─ stats/
@@ -38,13 +41,17 @@ apps/web/
 │  │  ├─ leaderboard/
 │  │  └─ badges/
 │  ├─ components/
-│  │  ├─ ui/
+│  │  ├─ ui/                     Button, TextField, SelectField, Alert, loader
 │  │  ├─ charts/
 │  │  └─ vendor/reactbits/
 │  ├─ lib/
-│  │  ├─ api.ts
+│  │  ├─ api.ts                  interceptor de fetch y refresh único
+│  │  ├─ auth-store.ts           access token en memoria
 │  │  ├─ queryClient.ts
+│  │  ├─ use-document-title.ts
 │  │  └─ dates.ts
+│  ├─ mocks/                     backend MSW con estado (tests)
+│  ├─ test/                      setup y helper renderApp
 │  ├─ styles/
 │  └─ main.tsx
 ├─ public/
@@ -53,21 +60,22 @@ apps/web/
 
 ## 3. Rutas
 
-| Ruta | Página | Acceso |
-|---|---|---|
-| `/` | Landing | Público |
-| `/login` | Login | Público; redirige a `/app` si hay sesión |
-| `/register` | Registro | Público; redirige a `/app` si hay sesión |
-| `/app` | Dashboard | Protegido |
-| `/app/subjects` | Asignaturas | Protegido |
-| `/app/history` | Historial | Protegido |
-| `/app/leaderboard` | Leaderboard | Protegido (post-MVP) |
-| `/app/settings` | Ajustes | Protegido |
+| Ruta               | Página      | Acceso                                   |
+| ------------------ | ----------- | ---------------------------------------- |
+| `/`                | Landing     | Público                                  |
+| `/login`           | Login       | Público; redirige a `/app` si hay sesión |
+| `/register`        | Registro    | Público; redirige a `/app` si hay sesión |
+| `/app`             | Dashboard   | Protegido                                |
+| `/app/subjects`    | Asignaturas | Protegido                                |
+| `/app/history`     | Historial   | Protegido                                |
+| `/app/leaderboard` | Leaderboard | Protegido (post-MVP)                     |
+| `/app/settings`    | Ajustes     | Protegido                                |
 
 Reglas:
 
 - Rutas protegidas redirigen a `/login?returnTo=...`.
 - Tras login, volver a `returnTo` si es una ruta interna segura.
+- `returnTo` solo se acepta si resuelve al **mismo origen** y su ruta es `/app` o empieza por `/app/`; se conservan query y hash. Cualquier otro valor (`https://…`, `//…`, `/login`, `/app/../login`) cae a `/app`. Sin esta validación sería un open redirect.
 - Página 404 clara.
 
 ## 4. Estado
@@ -78,19 +86,17 @@ TanStack Query es la fuente para datos remotos:
 
 - `staleTime` corto en datos personales.
 - Invalidación tras mutaciones.
-- `retry` limitado; no reintentar 401/403.
+- `retry` limitado; no reintentar 401/403/404/422/429.
 - Query keys centralizadas.
 
 Ejemplo de claves:
 
 ```ts
-['auth', 'me']
-['subjects', { includeArchived }]
-['sessions', { from, to, subjectId, page, pageSize }]
-['stats', 'summary', { range, timezone }]
-['stats', 'weekly', { weeks, timezone }]
-['leaderboard', 'weekly', { scope, page }]
-['badges']
+['auth', 'me'][('subjects', { includeArchived })][
+  ('sessions', { from, to, subjectId, page, pageSize })
+][('stats', 'summary', { range, timezone })][('stats', 'weekly', { weeks, timezone })][
+  ('leaderboard', 'weekly', { scope, page })
+]['badges'];
 ```
 
 ### 4.2 Estado de UI
@@ -104,10 +110,22 @@ Ejemplo de claves:
 
 - Access token en memoria (no `localStorage`).
 - Refresh cookie gestionada por el navegador.
-- Al cargar la app, intentar `GET /auth/me`; si falla, intentar refresh una vez.
-- Interceptor de API: en `401`, refrescar y reintentar una sola vez.
+- **Orden de arranque: refresh primero.** Tras recargar, el access token en memoria ya no existe, así que pedir `GET /auth/me` primero garantizaría un `401` en cada carga. El bootstrap es: si no hay token → `POST /auth/refresh`; si responde con token → `GET /auth/me`; si responde `401` → anónimo (una sola petición).
+- **Bootstrap bajo demanda**: `AuthProvider` se monta solo en `/login`, `/register` y `/app`. La landing no lo necesita, y cada visita anónima a una ruta con sesión gastaría cupo del rate limit de refresh.
+- Interceptor de API: en `401`, refrescar y reintentar una sola vez. Un único refresh compartido para todas las peticiones que fallan a la vez (sin tormenta, sin carreras de rotación).
+- Rutas exentas de refresh: `login`, `register`, `refresh` y `logout`. En ellas un `401` es la respuesta real.
+- `429` en el refresh: la sesión **no** se cierra y no se redirige. La pantalla muestra un aviso con reintento; cerrar sesión por un límite temporal expulsaría a usuarios legítimos.
 - Logout limpia queries y redirige a `/`.
 - No mostrar contenido protegido mientras se resuelve la sesión; usar skeleton o pantalla de carga.
+
+Estados que expone `AuthProvider`:
+
+| Estado          | Significado                          | Efecto en la UI                                                                                                                                          |
+| --------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `loading`       | Se está comprobando la sesión        | `/app`: pantalla de carga, nunca contenido protegido. `/login` y `/register`: el formulario se muestra ya y solo se redirige si la sesión resulta válida |
+| `authenticated` | Hay usuario                          | Renderiza la ruta (o `/app` desde login/registro)                                                                                                        |
+| `anonymous`     | El refresh devolvió `401`            | `/app` → `/login?returnTo=…`; login y registro se muestran                                                                                               |
+| `unavailable`   | No se pudo comprobar (429, 5xx, red) | `/app`: aviso con reintento, **no** se cierra sesión. `/login` y `/register`: se muestra el formulario                                                   |
 
 ## 6. Data fetching y mutaciones
 
@@ -203,5 +221,5 @@ No usar toasts para errores que deben quedarse visibles en el formulario.
 ```bash
 pnpm --filter web test
 pnpm --filter web test -- src/features/pomodoro/Timer.test.tsx
-pnpm test:e2e -- tests/auth.spec.ts
+pnpm test:e2e -- e2e/auth.spec.ts
 ```
