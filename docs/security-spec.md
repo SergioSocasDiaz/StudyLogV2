@@ -9,7 +9,9 @@
 
 ## 2. Contraseñas
 
-- Hash con **argon2id** (preferido) o bcrypt con coste alto si argon2 no es viable en el runtime.
+- Hash con **argon2id** (implementado con `@node-rs/argon2`) o bcrypt con coste alto si argon2 no es viable en el runtime.
+- Parámetros actuales: `memoryCost` 19 MiB, `timeCost` 2, `parallelism` 1 (línea base OWASP, ~10–15 ms por hash).
+- Cuando el email no existe, se verifica igualmente contra un hash de relleno para que el tiempo de respuesta no revele si la cuenta existe.
 - Nunca guardar ni loggear contraseñas en claro.
 - Longitud mínima razonable (p. ej. 8–12 caracteres) y límite máximo para evitar abusos.
 - No imponer reglas de composición que favorezcan contraseñas débiles; permitir frases largas.
@@ -33,6 +35,8 @@
 - Se guarda solo su hash en `refresh_tokens`.
 - Rotación en cada uso.
 - Detección de reutilización: si se usa un token revocado, revocar toda la familia y forzar login.
+- **Excepción de gracia**: una reutilización dentro de los 10 s posteriores a la rotación se trata como dos pestañas concurrentes; se emite un token hermano de la misma familia en lugar de revocar. Pasada la ventana, la reutilización revoca la familia.
+- Cada login abre una familia distinta (`family_id`), así que un token robado solo invalida ese dispositivo.
 - Logout revoca el token actual y limpia la cookie.
 
 ### 3.3 Flujo de sesión
@@ -49,9 +53,9 @@ Evitar bucles infinitos de refresh: un solo reintento por petición.
 ## 4. CSRF
 
 - `SameSite=Lax` como primera defensa.
-- Validar `Origin`/`Referer` en peticiones mutables.
+- Validar `Origin`/`Referer` contra `APP_ORIGIN` (lista separada por comas) en peticiones mutables. Una petición sin `Origin` ni `Referer` viene de un cliente que no es navegador y no puede arrastrar cookies de la víctima, así que se permite.
 - Si web y API están en dominios distintos, usar `SameSite=None; Secure` y token CSRF de doble envío.
-- No aceptar peticiones mutables sin comprobación de origen.
+- No aceptar peticiones mutables con un `Origin` desconocido.
 
 ## 5. CORS
 

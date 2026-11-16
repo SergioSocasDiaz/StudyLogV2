@@ -34,6 +34,7 @@ Códigos y estados en `packages/shared/src/errors.ts`:
 |---|---|
 | 400 | `BAD_REQUEST` |
 | 401 | `UNAUTHORIZED` |
+| 401 | `INVALID_CREDENTIALS` |
 | 403 | `FORBIDDEN` |
 | 404 | `NOT_FOUND` |
 | 409 | `CONFLICT` |
@@ -106,3 +107,14 @@ Ambos incluyen `x-request-id` en la respuesta.
 5. Tras el merge, el resto de ramas hacen rebase y adaptan sus consumidores.
 
 Un cambio incompatible requiere una nueva versión del prefijo HTTP (`/v2`) o una estrategia expand/contract documentada. No se rompe v0 dentro de `/v1`.
+
+## 8. Cambios aditivos posteriores
+
+Los cambios de esta sección son **compatibles**: añaden piezas sin modificar ninguna de las congeladas en la Fase 0.
+
+### Fase 1 — Auth (2026-11-16)
+
+- Código de error `INVALID_CREDENTIALS` (`401`) para login fallido, separado de `UNAUTHORIZED` (token ausente o inválido).
+- `schemas/auth.ts`: `authResponseSchema` (`{ user, accessToken }`) y `refreshResponseSchema` (`{ accessToken }`).
+- Constantes: `API_PREFIX`, `REFRESH_COOKIE_NAME`, `REFRESH_COOKIE_PATH`, `AUTH_RATE_LIMIT`, `REFRESH_REUSE_GRACE_SECONDS`, `ACCESS_TOKEN_TYPE`.
+- El refresh token no forma parte del contrato HTTP: viaja solo en la cookie `httpOnly`.
